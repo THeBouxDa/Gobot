@@ -1,0 +1,12 @@
+# ignore unrelated files
+__pycache__/
+.vscode/
+
+# ignore sensitive data
+private/
+
+# ignore non-code directories
+assets/
+
+# ignore all log files
+*.log
