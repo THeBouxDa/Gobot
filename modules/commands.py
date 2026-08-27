@@ -46,7 +46,7 @@ class CommandsCog(commands.Cog):
         try:
             await interaction.response.defer()
             await interaction.response.send_message(f'You rolled {randint(1, sides)}!')
-        except Exception:
+        except Exception as e:
             await interaction.response.send_message('Something went wrong.')
     
     

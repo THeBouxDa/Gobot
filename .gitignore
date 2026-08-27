@@ -5,6 +5,9 @@ __pycache__/
 # ignore sensitive data
 private/
 
+# ignore database files
+*.db
+
 # ignore non-code directories
 assets/
 
