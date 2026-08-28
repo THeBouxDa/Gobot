@@ -8,6 +8,9 @@ private/
 # ignore database files
 *.db
 
+# ignore raw data dump
+data/raw/
+
 # ignore non-code directories
 assets/
 

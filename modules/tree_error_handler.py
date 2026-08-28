@@ -1,3 +1,6 @@
+import sys
+import traceback
+
 from discord import Interaction
 from discord import app_commands as apc
 
@@ -10,4 +13,5 @@ async def on_tree_error(interaction: Interaction, error: apc.AppCommandError):
     elif isinstance(error, apc.BotMissingPermissions):
         await interaction.response.send_message(f"I don't have the permissions required to execute this command.")
     else:
-        raise error
+        print(f'Ignoring exception in command {interaction.command}:', file=sys.stderr)
+        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)

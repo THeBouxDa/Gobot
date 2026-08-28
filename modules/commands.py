@@ -1,14 +1,15 @@
-from typing import Final, Literal
+from typing import Final, Literal, Any
+from collections.abc import Callable
 
 import asyncio
-
 
 import discord
 from discord import app_commands as apc
 from discord import Member, Interaction
 from discord.ext import commands
-# from client import BussyClient
 from random import random, randint
+
+from views.rps_view import RPSView, rps_challenge_start
 
 
 RPS_OPTIONS = Literal['Rock', 'Paper', 'Scissors']
@@ -20,29 +21,53 @@ def is_update_authorized(interaction: Interaction) -> bool:
     return False
 
 
-
 class CommandsCog(commands.Cog):
-    # decide_group = apc.Group(name='decide', description='Commands that make the choice for you')
-    
+
+    # TODO: Implement visual elements
     @apc.command(name='coinflip', description='Flips a coin')
     @apc.describe(invisible='Makes the reply invisible to everyone else')
     async def _coin_flip(self, interaction: Interaction, invisible: ENG_BOOL = 'No') -> None:
+        
         is_heads: bool = random() < 0.5
         reply: str = "heads" if is_heads else "tails"
         reply = f"You got {reply}!"
         flag = invisible == 'Yes'
-        await interaction.response.send_message()
+        await interaction.response.send_message(reply, ephemeral=flag)
 
 
     @apc.command(name='rps', description='Play Rock Paper Scissors against another member')
     @apc.describe(choice='Your choice to use', target='The member to play against')
-    async def _rps(self, interaction: Interaction, choice: RPS_OPTIONS, target: Member | None = None) -> None:
-        await interaction.response.send_message(f'You chose {choice}')
+    @apc.guild_only # static checkers still whine if you assume the guild exists
+    async def _rps(self, interaction: Interaction, choice: RPS_OPTIONS, target: Member | None = None) -> Any:
+        
+        # preliminary checks 
+        if interaction.guild is None:
+            return await interaction.response.send_message("This command is only designed for guilds.")
+        
+        target_handle: str = target.nick if target and target.nick else "anyone"
+        sender: Member | None = interaction.guild.get_member(interaction.user.id)
+        
+        if sender is None:
+            return await interaction.response.send_message("Something went wrong")
+        
+        # message creation
+        rps_view = RPSView(original=interaction, target=target, sender=sender, choice_1=choice.lower())
+        embed = rps_challenge_start(sender.nick, target_handle)
+        
+        await interaction.response.send_message(embed=embed, view=rps_view)
+    
+    def _rps_engine(self, original: Interaction) -> Callable:
+        
+        async def result():
+            pass
+        
+        return result
+        
     
     
     @apc.command(name='diceroll', description='Roll a die of any number of sides')
     @apc.describe(sides='The number of sides')
-    async def _dice_roll(self, interaction: Interaction, sides: int) -> None:
+    async def _dice_roll(self, interaction: Interaction, sides: apc.Range[int, 1, 2147483647]) -> None:
         try:
             await interaction.response.defer()
             await interaction.response.send_message(f'You rolled {randint(1, sides)}!')
@@ -74,4 +99,3 @@ class CommandsCog(commands.Cog):
     #     await interaction.response.send_modal()
     
     
-   

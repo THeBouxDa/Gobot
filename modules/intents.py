@@ -5,5 +5,6 @@ def personalized() -> Intents:
     intents.typing = False
     intents.presences = False
     intents.message_content = True
+    intents.members = True
     
     return intents

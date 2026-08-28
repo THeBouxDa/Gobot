@@ -17,7 +17,6 @@ class BussyClient(commands.Bot):
 
 
     async def on_ready(self):
-        # await self.tree.sync()
         print(f'Logged on as {str(self.user).split('#')[0]}!')
 
 
@@ -25,6 +24,7 @@ class BussyClient(commands.Bot):
         print(f"Disconnected from Discord.")
 
 
+    # TODO: Delete this by the end
     async def on_message(self, message):
         print(f'Message from {message.author}: {message.content}')
 
@@ -37,4 +37,5 @@ class BussyClient(commands.Bot):
         self.tree.copy_global_to(guild=self.test_guild)
         await self.tree.sync(guild=self.test_guild)
         
+        # TODO: Create game activity system.
         # await self.change_presence(activity=discord.Game(name="Goblin Sushi"))

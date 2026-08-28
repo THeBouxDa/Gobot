@@ -25,7 +25,5 @@ log_handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode
 
 
 if __name__ == "__main__":
-    # client.run(token, log_handler=log_handler)
-    # print (db_file)
-    asyncio.run(database.create_tables())
-    # database.create_tables()
+    client.run(token, log_handler=log_handler, reconnect=True)
+    # asyncio.run(database.create_tables())
