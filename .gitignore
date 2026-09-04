@@ -16,3 +16,7 @@ assets/
 
 # ignore all log files
 *.log
+
+.env
+
+.ruff_cache/

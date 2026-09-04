@@ -4,7 +4,7 @@ import discord
 from discord import Interaction, Member, ButtonStyle
 from discord.ui import View, Button
 
-from config import emoji_list, rps_match
+from configs.config import emoji_list, rps_match
 # from private.config import rps_challenge_end
 
 def rps_challenge_start(sender, target) -> discord.Embed:
@@ -71,8 +71,8 @@ class RPSView(View):
             return await interaction.response.send_message("The challenge is not for you!", ephemeral=True)
 
         # TODO: UNCOMMENT THIS BY THE END
-        # if self.sender == interaction.user:
-        #     return await interaction.response.send_message("You can't play with yourself!", ephemeral=True)
+        if self.sender == interaction.user:
+            return await interaction.response.send_message("You can't play with yourself!", ephemeral=True)
         
         if not self.enabled:
             return await interaction.response.send_message("Somebody else played first.", ephemeral=True)
