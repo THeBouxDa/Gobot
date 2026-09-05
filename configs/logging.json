@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "formatters": {
+    "standard": {
+      "format": "[{asctime}] [{levelname:<8}] [{name}]: {message}",
+      "datefmt": "%d-%m-%Y %H:%M:%S %z",
+      "style": "{"
+    }
+  },
+  "handlers": {
+    "stdout": {
+      "class": "logging.StreamHandler",
+      "level": "SUCCESS",
+      "formatter": "standard",
+      "stream": "ext://sys.stdout"
+    },
+    "stderr": {
+      "class": "logging.StreamHandler",
+      "level": "WARNING",
+      "formatter": "standard",
+      "stream": "ext://sys.stderr"
+    },
+    "rotating_file": {
+      "class": "logging.handlers.RotatingFileHandler",
+      "filename": "logs/app.log",
+      "mode": "a",
+      "level": "DEBUG",
+      "formatter": "standard",
+      "maxBytes": 10000000,
+      "backupCount": 3,
+      "encoding": "utf-8"
+    },
+    "last_execution": {
+      "class": "logging.FileHandler",
+      "filename": "logs/latest_run.log",
+      "mode": "w",
+      "level": "DEBUG",
+      "formatter": "standard",
+      "encoding": "utf-8"
+    },
+    "queue_handler": {
+      "class": "logging.handlers.QueueHandler",
+      "handlers": ["stderr", "stdout", "rotating_file", "last_execution"],
+      "respect_handler_level": true
+    }
+  },
+  "loggers": {
+    "root": {
+      "level": "DEBUG",
+      "handlers": ["queue_handler"]
+    }
+  }
+}

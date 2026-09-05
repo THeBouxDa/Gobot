@@ -1,0 +1,32 @@
+{
+  "broken_chars": "♯'?",
+  "raw_section_pattern": "^==([\\w ]+)==$",
+  "raw_group_pattern": "^===(.+?)(?: Data)?===$",
+  "raw_property_pattern": "^\\|.+=.*",
+  "ignored_sections": ["Character Mechanics"],
+  "excluded_moves": [
+    "Wild Assault",
+    "Charged Wild Assault",
+    "Finish Blow",
+    "Dash Cancel",
+    "Taunt A",
+    "Respect A",
+    "Taunt B",
+    "Respect B"
+  ],
+  "db_bound_keys": [
+    "name",
+    "category",
+    "input",
+    "guard",
+    "invuln",
+    "damage",
+    "startup",
+    "active",
+    "recovery",
+    "images",
+    "hitboxes",
+    "onBlock",
+    "onHit"
+  ]
+}

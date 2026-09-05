@@ -1,33 +1,35 @@
-from typing import Final
-from pathlib import Path
+import json
+from typing import TYPE_CHECKING, Final
 
-from logging.handlers import QueueHandler
 import discord
-import aiosqlite
-import asyncio
 
-from private.config import token, test_guild_id
-from modules.client import BussyClient
 import modules.intents
-from modules.database import Database
-from modules.utils.logging_util import setup_logging
+from modules.client import BussyClient
+from modules.json_types import Secrets
+from modules.paths import secrets_path
+from modules.utils.logging_utils import setup_logging
+
+with secrets_path.open(encoding="utf8") as file:
+    secrets: Secrets = json.load(file)
+
+token = secrets.get("token")
+test_guild_id = secrets["test_guild_ids"].get("nexus")
+
+if TYPE_CHECKING:
+    assert test_guild_id is not None
 
 
 setup_logging()
 
-cwd: Path = Path.absolute(Path.cwd())
-db_path: Path = Path.joinpath(cwd, 'data', 'processed', "test.db")
 test_guild: Final = discord.Object(id=test_guild_id)
 intents = modules.intents.personalized()
 
-database = Database(db_path)
 client = BussyClient(intents, test_guild)
 
 
-
-if __name__ == "__main__":
+def main() -> None:
     client.run(token, log_handler=None, reconnect=True)
 
-    
-    
-    pass
+
+if __name__ == "__main__":
+    main()

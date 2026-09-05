@@ -1,0 +1,27 @@
+{
+  "emoji_list": {
+    "rock": "🪨",
+    "paper": "🗞",
+    "scissors": "✂",
+    "hand_rock": "✊",
+    "hand_paper": "✋",
+    "hand_scissors": "✌️"
+  },
+  "rps_result": {
+    "draw": "You Drew!",
+    "win": "You Won!",
+    "lose": "You Lost!"
+  },
+  "rps_match": {
+    "win": [
+      ["rock", "scissors"],
+      ["paper", "rock"],
+      ["scissors", "paper"]
+    ],
+    "lose": [
+      ["rock", "paper"],
+      ["paper", "scissors"],
+      ["scissors", "rock"]
+    ]
+  }
+}

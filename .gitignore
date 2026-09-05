@@ -1,22 +1,20 @@
-# ignore unrelated files
+# Ignore unrelated files
 __pycache__/
+.ruff_cache/
+
+# Ignore environment files
 .vscode/
+.venv/
 
-# ignore sensitive data
-private/
-
-# ignore database files
-*.db
-
-# ignore raw data dump
-data/raw/
-
-# ignore non-code directories
+# Ignore non-code directories
 assets/
 
-# ignore all log files
+# Ignore sensitive data
+private/*
+
+# Ignore data files
+*.db
+*.html
+
+# Ignore all log files
 *.log
-
-.env
-
-.ruff_cache/
