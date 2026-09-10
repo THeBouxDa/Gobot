@@ -24,6 +24,7 @@ class CommandChecks:
     def is_db_unblocked(cls, _: Interaction | None = None) -> bool:
         if cls._block_db_access:
             raise CheckFailure("Database is locked due to an update.")
+
         return True
 
     @classmethod
@@ -37,4 +38,5 @@ class CommandChecks:
     def is_update_authorized(cls, interaction: Interaction) -> bool:
         if interaction.user.id not in cls._authorized_users.values():
             raise CheckFailure("Unauthorized user.")
+
         return True

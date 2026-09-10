@@ -155,10 +155,12 @@ async def fetch_all_and_store() -> None:
     urls = [char.data_url for char in characters]
 
     # tasks: list[asyncio.Task[None]] = []
-    tasks: list[asyncio._CoroutineLike] = []
+    tasks: list[asyncio.Task] = [
+        asyncio.create_task(store_data(homepage_path, homepage))
+    ]
     async for index, doc in fetch_batch(urls, delay=1):
         char = characters[index]
-        tasks.append(store_data(char.data_path, doc))
+        tasks.append(asyncio.create_task(store_data(char.data_path, doc)))
 
     await asyncio.gather(*tasks)
 

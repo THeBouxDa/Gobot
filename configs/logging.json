@@ -41,7 +41,7 @@
         },
         "queue_handler": {
             "class": "logging.handlers.QueueHandler",
-            "handlers": ["stdout", "rotating_file", "last_execution"],
+            "handlers": ["stderr", "rotating_file", "last_execution"],
             "respect_handler_level": true
         }
     },
