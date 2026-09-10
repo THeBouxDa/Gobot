@@ -24,11 +24,10 @@ class MiscCog(Cog):
 
     # TODO: Implement visual elements
     @apc.command(name="coinflip", description="Flips a coin")
-    @apc.describe(invisible="Makes the reply invisible to everyone else")
+    @apc.describe(invisible="Makes the command invisible to everyone else")
     async def _coin_flip(
         self, interaction: Interaction, invisible: EN_BOOL = "No"
     ) -> None:
-
         is_heads: bool = choice((True, False))
         reply: str = "heads" if is_heads else "tails"
         reply = f"You got {reply}!"
@@ -84,12 +83,13 @@ class MiscCog(Cog):
 
     @apc.command(name="diceroll", description="Roll a d20")
     async def _dice_roll(self, interaction: Interaction) -> None:
-        await interaction.response.send_message(f"You rolled {randint(1, 20)}!")
+        await interaction.response.defer()
+        await interaction.followup.send(f"You rolled {randint(1, 20)}!")
 
     @apc.command(name="time", description="Notifies you after a set time")
     async def _time(self, interaction: Interaction, time_to_wait: int) -> None:
         await interaction.response.defer(ephemeral=True)
-        await interaction.edit_original_response(
+        await interaction.followup.send(
             content=f"I will notify you after {time_to_wait} seconds have passed!"
         )
 

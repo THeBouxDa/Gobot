@@ -66,7 +66,7 @@ def _fetch_data_sync(url: str) -> HTML_Document:
 
 def _store_data_sync(filepath: Path, data: str) -> None:
     filepath.write_text(data, encoding="utf8")
-    logger.success("Stored page: %s", filepath)
+    logger.checkpoint("Stored page: %s", filepath)
 
 
 def _load_data_sync(path: Path) -> str:

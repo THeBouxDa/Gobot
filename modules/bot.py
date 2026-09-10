@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 
 
 class BussyBot(commands.Bot):
-    def __init__(self, intents: Intents, test_guild: discord.Object) -> None:
+    def __init__(self, intents: Intents, test_guild: discord.Object | None) -> None:
         super().__init__(
             command_prefix=commands.when_mentioned,
             intents=intents,
@@ -51,7 +51,9 @@ class BussyBot(commands.Bot):
         await self.add_cog(MiscCog(self))
         await self.add_cog(DustloopCog(self))
 
-        self.tree.copy_global_to(guild=self.test_guild)
+        if self.test_guild:
+            self.tree.copy_global_to(guild=self.test_guild)
+
         await self.tree.sync()
         self.set_random_activity_loop.start()
 

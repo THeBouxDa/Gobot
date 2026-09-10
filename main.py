@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING
 
 import discord
 
@@ -7,16 +7,15 @@ from modules.bot import BussyBot
 from modules.resources.configs import secrets_config as secrets
 from modules.utils.logging_utils import setup_logging
 
+setup_logging()
+
 token = secrets["token"]
 test_guild_id = secrets["test_guild_ids"].get("stream")
 
 if TYPE_CHECKING:
     assert test_guild_id is not None
 
-
-setup_logging()
-
-test_guild: Final = discord.Object(id=test_guild_id)
+test_guild = discord.Object(id=test_guild_id) if test_guild_id else None
 intents = modules.intents.personalized()
 
 client = BussyBot(intents, test_guild)
