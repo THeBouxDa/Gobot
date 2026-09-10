@@ -10,10 +10,11 @@ __pycache__/
 assets/
 
 # Ignore sensitive data
-private/*
+private/
 
 # Ignore data files
 *.db
+*.db-*
 *.html
 
 # Ignore all log files

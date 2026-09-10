@@ -1,17 +1,12 @@
-import json
 from typing import Literal
 
 import discord
 from discord import ButtonStyle, Interaction, Member
 from discord.ui import Button, View
 
-from modules.json_types import RPS
-from modules.paths import rps_config
+from modules.resources.configs import rps_config
 
-with rps_config.open(encoding="utf8") as file:
-    settings: RPS = json.load(file)
-
-emoji = settings["emoji_list"]
+emoji = rps_config["emoji_list"]
 
 
 def rps_challenge_start(sender: str, target: str) -> discord.Embed:
@@ -65,7 +60,7 @@ class RPSView(View):
 
         if p1 == p2:
             result = 0
-        elif (p1, p2) in settings["rps_match"]["win"]:
+        elif (p1, p2) in rps_config["rps_match"]["win"]:
             result = 1
         else:
             result = 2
@@ -79,7 +74,6 @@ class RPSView(View):
             )
             return
 
-        # TODO: UNCOMMENT THIS BY THE END
         if self.sender == interaction.user:
             await interaction.response.send_message(
                 "You can't play with yourself!", ephemeral=True

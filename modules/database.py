@@ -1,117 +1,115 @@
-from collections.abc import Iterable
-from pathlib import Path
+from __future__ import annotations
+
+import asyncio
+from typing import TYPE_CHECKING
 
 import aiosqlite
+from sqlalchemy import text
 
-from modules.character import Character, Move
 from modules.utils.logging_utils import get_logger
 
-CREATE_TABLES: str = """
-    PRAGMA journal_mode=WAL;
-
-    CREATE TABLE IF NOT EXISTS characters (
-        character_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL UNIQUE,
-        path TEXT NOT NULL UNIQUE,
-        page_url TEXT NOT NULL UNIQUE,
-        data_url TEXT NOT NULL UNIQUE
-    );
-
-    CREATE TABLE IF NOT EXISTS moves (
-        move_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        category TEXT,
-        input TEXT,
-        guard TEXT,
-        invuln TEXT,
-        damage TEXT,
-        startup TEXT,
-        active TEXT,
-        recovery TEXT,
-        images TEXT,
-        hitboxes TEXT,
-        onBlock TEXT,
-        onHit TEXT,
-        char_name TEXT NOT NULL,
-        UNIQUE(char_name, input) ON CONFLICT IGNORE,
-        FOREIGN KEY (char_name) REFERENCES characters (name)
-    );
-
-    CREATE TABLE IF NOT EXISTS move_aliases (
-        alias_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        alias TEXT UNIQUE NOT NULL,
-        move_id INT NOT NULL,
-        FOREIGN KEY (move_id) REFERENCES moves (move_id)
-    );
-"""
+type Connection = aiosqlite.Connection
+type ConnectionPool = asyncio.Queue[Connection]
 
 
-CLEAR_TABLES: str = """
-    DROP TABLE IF EXISTS characters;
-    DROP TABLE IF EXISTS moves;
-"""
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
 
+    from sqlalchemy.ext.asyncio.engine import AsyncEngine
+
+    from modules.scraper.character import Character, Move
+
+
+CONNECTION_MAX = 5
+
+CREATE_TABLES = [
+    """
+        PRAGMA journal_mode=WAL;
+    """,
+    """
+        CREATE TABLE IF NOT EXISTS characters (
+            character_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            path TEXT NOT NULL UNIQUE,
+            page_url TEXT NOT NULL UNIQUE,
+            data_url TEXT NOT NULL UNIQUE
+        );
+    """,
+    """
+        CREATE TABLE IF NOT EXISTS moves (
+            move_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            section TEXT,
+            category TEXT,
+            name TEXT,
+            input TEXT,
+            guard TEXT,
+            invuln TEXT,
+            damage TEXT,
+            startup TEXT,
+            active TEXT,
+            recovery TEXT,
+            images TEXT,
+            hitboxes TEXT,
+            onBlock TEXT,
+            onHit TEXT,
+            char_name TEXT NOT NULL,
+            UNIQUE(char_name, input) ON CONFLICT IGNORE,
+            FOREIGN KEY (char_name) REFERENCES characters (name)
+        );
+    """,
+]
+CLEAR_TABLES = ["DROP TABLE IF EXISTS characters;", "DROP TABLE IF EXISTS moves;"]
 
 INSERT_CHARACTER = (
-    "INSERT INTO characters (name, path, page_url, data_url) VALUES (?, ?, ?, ?);"
+    "INSERT INTO characters (name, path, page_url, data_url) VALUES (:a, :b, :c, :d);"
 )
 INSERT_MOVE = """INSERT INTO moves
-    (category, name, input, startup, active, recovery, damage, guard, invuln, images, hitboxes, onBlock, onHit, char_name) values
-    (:category, :name, :input, :startup, :active, :recovery, :damage, :guard, :invuln, :images, :hitboxes, :onBlock, :onHit, :char_name);
+    (section, category, name, input, startup, active, recovery, damage, guard, invuln, images, hitboxes, onBlock, onHit, char_name) values
+    (:section, :category, :name, :input, :startup, :active, :recovery, :damage, :guard, :invuln, :images, :hitboxes, :onBlock, :onHit, :char_name);
 """
 
 
-type CharacterData = tuple[str, str, str, str]
+type DataMap = Mapping[str, str]
 
 logger = get_logger(__name__)
 
 
-class Database:
-    def __init__(self, db_filepath: Path) -> None:
-        self.path = db_filepath
+class ConnectionManager:
+    def __init__(self, engine: AsyncEngine) -> None:
+        self.engine = engine
 
     async def create_tables(self) -> None:
-        async with aiosqlite.connect(self.path) as db:
-            await db.executescript(CREATE_TABLES)
-            await db.commit()
-            logger.success("Tables created successfully.")
+        async with self.engine.begin() as conn:
+            for query in CREATE_TABLES:
+                await conn.execute(text(query))
+
+            logger.checkpoint("Tables created successfully.")
 
     async def clear_tables(self) -> None:
-        async with aiosqlite.connect(self.path) as db:
-            await db.executescript(CLEAR_TABLES)
+        async with self.engine.begin() as conn:
+            for query in CLEAR_TABLES:
+                await conn.execute(text(query))
 
-    async def insert_characters(self, characters: Iterable[Character]) -> None:
-        async with aiosqlite.connect(self.path) as db:
-            props: Iterable[CharacterData] = (
-                (char.name, str(char.data_path), char.page_url, char.data_url)
-                for char in characters
-            )
+        logger.checkpoint("Tables dropped successfully.")
 
-            await db.executemany(INSERT_CHARACTER, props)
-            await db.commit()
-            logger.success("Inserted all characters.")
+    async def insert_characters(self, characters: Sequence[Character]) -> None:
+        props: list[DataMap] = [
+            {
+                "a": char.name,
+                "b": str(char.data_path),
+                "c": char.page_url,
+                "d": char.data_url,
+            }
+            for char in characters
+        ]
 
-    async def insert_character(self, character: Character) -> None:
-        async with aiosqlite.connect(self.path) as db:
-            await db.execute(
-                INSERT_CHARACTER,
-                (
-                    character.name,
-                    str(character.data_path),
-                    character.page_url,
-                    character.data_url,
-                ),
-            )
+        async with self.engine.begin() as conn:
+            await conn.execute(text(INSERT_CHARACTER), props)
 
-            await db.commit()
-            logger.info("Character [%s] inserted successfully.", character.name)
+        logger.checkpoint("Inserted all characters.")
 
-    # just in case i get asked why i require char_name, it's because i
-    # don't trust dustloop editors to fill it in for every move
     async def insert_moves(self, moves: list[Move]) -> None:
-        async with aiosqlite.connect(self.path) as db:
-            move_gen = (move.data for move in moves)
-
-            await db.executemany(INSERT_MOVE, move_gen)
-            await db.commit()
-            logger.info("Moves for [%s] inserted successfully")
+        move_gen: list[DataMap] = [move.data for move in moves]
+        async with self.engine.begin() as conn:
+            await conn.execute(text(INSERT_MOVE), move_gen)
+            await conn.commit()

@@ -1,5 +1,4 @@
 import asyncio
-import json
 import time
 from collections.abc import AsyncIterator, Iterable
 from enum import Enum
@@ -8,8 +7,7 @@ from pathlib import Path
 import requests
 import requests.exceptions as rex
 
-from modules.json_types import ScraperSettings
-from modules.paths import scraping_config
+from modules.resources.configs import scraping_config
 from modules.utils.logging_utils import get_logger
 
 type HTML_Document = str
@@ -21,9 +19,6 @@ class StatusClasses(Enum):
     CLIENT_ERROR = 400
     SERVER_ERROR = 500
 
-
-with scraping_config.open(encoding="utf8") as file:
-    scraper_settings: ScraperSettings = json.load(file)
 
 MAX_RETRIES: int = 3
 
@@ -38,7 +33,7 @@ def _fetch_data_sync(url: str) -> HTML_Document:
             time.sleep(2**retries)
 
         try:
-            response = requests.get(url, headers=scraper_settings["headers"], timeout=5)
+            response = requests.get(url, headers=scraping_config["headers"], timeout=5)
             response.raise_for_status()
         except rex.Timeout:
             logger.exception("Timeout error for page %s", url)

@@ -1,14 +1,15 @@
 [project]
 name = "bussybot"
-version = "0.1.0"
+version = "0.2.0"
 description = "A really cool discord bot with dustloop integration."
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = [
     "aiosqlite>=0.22.1",
     "beautifulsoup4>=4.15.0",
     "discord-py>=2.7.1",
     "requests>=2.34.2",
+    "sqlalchemy>=2.0.52",
 ]
 
 [tool.uv]

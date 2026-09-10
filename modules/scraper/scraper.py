@@ -1,20 +1,16 @@
 import asyncio
-import json
 import re
+from typing import TYPE_CHECKING
 
 from bs4 import BeautifulSoup
 
-from modules.character import Character
-from modules.database import Database
-from modules.json_types import Parser, ScraperSettings
-from modules.move import Move
-from modules.paths import (
+from modules.resources.configs import parsing_config, scraping_config
+from modules.resources.paths import (
     characters_dir,
-    data_dir,
     homepage_path,
-    parsing_config,
-    scraping_config,
 )
+from modules.scraper.character import Character
+from modules.scraper.move import Move
 from modules.utils import parsing_utils as parser
 from modules.utils.aio_utils import (
     fetch_batch,
@@ -23,19 +19,17 @@ from modules.utils.aio_utils import (
     load_data,
     store_data,
 )
-from modules.utils.logging_utils import get_logger, setup_logging
+from modules.utils.logging_utils import get_logger
+
+if TYPE_CHECKING:
+    from modules.database import ConnectionManager
 
 logger = get_logger(__name__)
 
-with scraping_config.open(encoding="utf8") as file:
-    scraping: ScraperSettings = json.load(file)
 
-with parsing_config.open(encoding="utf8") as file:
-    parsing: Parser = json.load(file)
-
-group_pattern = parsing["raw_group_pattern"]
-property_pattern = parsing["raw_property_pattern"]
-section_pattern = parsing["raw_section_pattern"]
+group_pattern = parsing_config["raw_group_pattern"]
+property_pattern = parsing_config["raw_property_pattern"]
+section_pattern = parsing_config["raw_section_pattern"]
 
 
 def select_characters(homepage: str) -> list[Character]:
@@ -51,8 +45,8 @@ def select_characters(homepage: str) -> list[Character]:
     for link in links:
         name = str(link.attrs["title"])
         safe_name = parser.sanitize(name)
-        url = f"{scraping['domain_url']}{link.attrs['href']!s}"
-        data_url = scraping["character_data_url"].format(character=safe_name)
+        url = f"{scraping_config['domain_url']}{link.attrs['href']!s}"
+        data_url = scraping_config["character_data_url_template"].format(safe_name)
         data_path = characters_dir / f"{safe_name}.html"
 
         characters.append(
@@ -70,7 +64,7 @@ def select_characters(homepage: str) -> list[Character]:
     return characters
 
 
-def select_moves(file: str, char_name: str) -> list[Move]:
+def select_moves(file: str, char_name: str) -> list[Move]:  # noqa: C901
     moves: list[Move] = []
     soup = BeautifulSoup(file, "html.parser")
     raw = soup.select_one("textarea#wpTextbox1")
@@ -79,7 +73,10 @@ def select_moves(file: str, char_name: str) -> list[Move]:
         msg = f"Raw for {char_name} is broken!"
         raise TypeError(msg)
 
+    # Remove all comments, ensure all pipes are on a newline, and start from normal moves
     raw = raw.string
+    raw = re.sub(r"<!--.*?-->", "", raw, flags=re.DOTALL)
+    raw = re.sub(f"(?<!\n){re.escape('|')}", f"\n{'|'}", raw)
     raw = raw.split("==Normal Moves==")[1].splitlines()
 
     category: str = ""
@@ -87,10 +84,11 @@ def select_moves(file: str, char_name: str) -> list[Move]:
     data: dict[str, str] = {}
     for line in raw:
         # ignore moves in ignored section
+
         match = re.search(section_pattern, line)
         if match is not None:
             section = match.group(1)
-            if section in parsing["ignored_sections"]:
+            if section in parsing_config["ignored_sections"]:
                 continue
 
         # store the group upon encountering a new one
@@ -115,7 +113,7 @@ def select_moves(file: str, char_name: str) -> list[Move]:
             data[prop] = val
             data["char_name"] = char_name
 
-            for key in parsing["db_bound_keys"]:
+            for key in parsing_config["db_bound_keys"]:
                 if data.get(key) is None:
                     data[key] = ""
 
@@ -152,7 +150,7 @@ async def build_characters() -> list[Character]:
 
 
 async def fetch_all_and_store() -> None:
-    homepage: str = await fetch_data(scraping["homepage_url"])
+    homepage: str = await fetch_data(scraping_config["homepage_url"])
     characters: list[Character] = select_characters(homepage)
     urls = [char.data_url for char in characters]
 
@@ -166,16 +164,13 @@ async def fetch_all_and_store() -> None:
 
 
 # code to run if starting as script or rebuilding
-async def launch(db: Database, *, scrape: bool) -> None:
+async def launch(db: ConnectionManager, *, scrape: bool) -> None:
     """
     Launches an update for the database.
-    if parameter scrape is False, it will rebuild from locally stored data,
+
+    If parameter scrape is False, it will rebuild from locally stored data,
     else it will request files from dustloop
     """
-
-    async def load_and_pair(char: Character, index: int) -> int:
-        await db.insert_character(char)
-        return index
 
     if scrape:
         await fetch_all_and_store()
@@ -183,16 +178,35 @@ async def launch(db: Database, *, scrape: bool) -> None:
     task = asyncio.create_task(build_characters())
     await db.clear_tables()
     await db.create_tables()
-    characters = await task
 
+    characters = await task
     await db.insert_characters(characters)
 
     async with asyncio.TaskGroup() as group:
         for char in characters:
             group.create_task(db.insert_moves(char.moves))
 
+    logger.checkpoint("All characters' moves inserted successfully.")
+
 
 if __name__ == "__main__":
+    from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+
+    from modules.database import ConnectionManager
+    from modules.resources.paths import database_path
+    from modules.utils.logging_utils import get_logger, setup_logging
+
     setup_logging()
-    db = Database(data_dir / "test.db")
+
+    db_url = f"sqlite+aiosqlite:///{database_path}"
+    engine: AsyncEngine = create_async_engine(
+        db_url,
+        pool_size=10,
+        max_overflow=10,
+        pool_timeout=60,
+        pool_recycle=7200,
+        connect_args={"check_same_thread": False},
+    )
+
+    db = ConnectionManager(engine)
     asyncio.run(launch(db, scrape=False))
