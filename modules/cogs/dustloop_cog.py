@@ -100,6 +100,7 @@ class DustloopCog(Cog):
         alias="The alias to which you refer the character by.",
     )
     @apc.checks.cooldown(2, 10)
+    @apc.check(predicate=CommandChecks.is_not_updating)
     async def _add_character_alias(
         self, interaction: Interaction, character: str, alias: str
     ) -> None:
@@ -143,12 +144,13 @@ class DustloopCog(Cog):
             )
 
     @apc.command(name="move_alias", description="Create an alias for a move")
-    @apc.checks.cooldown(2, 10)
     @apc.describe(
         move="The move the alias is for.",
         character="The character the move is from.",
         alias="The alias to which you refer the character by.",
     )
+    @apc.checks.cooldown(2, 10)
+    @apc.check(predicate=CommandChecks.is_not_updating)
     async def _add_move_alias(
         self, interaction: Interaction, character: str, move: str, alias: str
     ) -> None:
@@ -312,7 +314,12 @@ class DustloopCog(Cog):
     async def _on_add_character_alias_error(
         self, interaction: Interaction, error: apc.AppCommandError
     ) -> None:
-        if isinstance(error, apc.CommandOnCooldown):
+        if isinstance(error, apc.CheckFailure):
+            await interaction.response.send_message(
+                "Alias creation is not available during an update, please try later!",
+                ephemeral=True,
+            )
+        elif isinstance(error, apc.CommandOnCooldown):
             await interaction.response.send_message(
                 "Command is currently on cooldown!", ephemeral=True
             )
@@ -321,7 +328,12 @@ class DustloopCog(Cog):
     async def _on_add_move_alias_error(
         self, interaction: Interaction, error: apc.AppCommandError
     ) -> None:
-        if isinstance(error, apc.CommandOnCooldown):
+        if isinstance(error, apc.CheckFailure):
+            await interaction.response.send_message(
+                "Alias creation is not available during an update, please try later!",
+                ephemeral=True,
+            )
+        elif isinstance(error, apc.CommandOnCooldown):
             await interaction.response.send_message(
                 "Command is currently on cooldown!", ephemeral=True
             )

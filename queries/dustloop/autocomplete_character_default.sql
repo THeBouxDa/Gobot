@@ -1,1 +1,4 @@
-SELECT name FROM characters ORDER BY name ASC LIMIT 25;
+SELECT name
+FROM characters
+ORDER BY name ASC
+LIMIT 25;
