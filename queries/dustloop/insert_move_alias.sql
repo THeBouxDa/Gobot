@@ -1,2 +1,5 @@
 INSERT INTO move_aliases (alias, move_input, char_name)
-VALUES (:alias, :move, :char);
+SELECT :alias, input, char_name
+FROM moves
+WHERE ';' || input || ';' LIKE '%;' || :move || ';%'
+AND char_name = :char;

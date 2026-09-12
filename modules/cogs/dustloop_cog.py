@@ -156,10 +156,13 @@ class DustloopCog(Cog):
 
         try:
             async with self.bot.db.engine.begin() as conn:
-                await conn.execute(
+                cursor = await conn.execute(
                     text(get_query("dustloop.insert_move_alias")),
                     {"char": character, "move": move, "alias": alias},
                 )
+                await conn.commit()
+                row_count = cursor.rowcount
+
         except IntegrityError as e:
             logger.exception("IntegrityError during move alias insertion:")
             error_msg = str(e.orig)
@@ -180,15 +183,18 @@ class DustloopCog(Cog):
                 "Something went exceptionally wrong, go bother the dev."
             )
         else:
-            await interaction.followup.send("Alias added!")
-            logger.success(
-                'Move alias "%s" for move "%s" of "%s" has been added by user [%s@%s].',
-                alias,
-                move,
-                character,
-                interaction.user.name,
-                interaction.user.id,
-            )
+            if row_count == 0:
+                await interaction.followup.send("Move not found...")
+            else:
+                await interaction.followup.send("Alias added!")
+                logger.success(
+                    'Move alias "%s" for move "%s" of "%s" has been added by user [%s@%s].',
+                    alias,
+                    move,
+                    character,
+                    interaction.user.name,
+                    interaction.user.id,
+                )
 
     @_frame_data.autocomplete("character")
     @_add_character_alias.autocomplete("character")
@@ -224,7 +230,7 @@ class DustloopCog(Cog):
     async def _move_autocomplete(
         self, interaction: Interaction, current: str
     ) -> list[apc.Choice[str]]:
-        suggestions: list[str] = []
+        suggestions: dict[str, str] = {}
         character: str = interaction.namespace.character
 
         async with self.bot.db.engine.connect() as conn:
@@ -247,24 +253,24 @@ class DustloopCog(Cog):
 
                 rows: Sequence[Row[Any]] = result.all()
 
-            suggestions = []
-            for row in rows:
-                data_dict = row._asdict()
-                move_input = data_dict.get("input")
-                move_name = data_dict.get("name")
+        for row in rows:
+            data_dict = row._asdict()
+            move_input = key = data_dict.get("input")
+            move_name = data_dict.get("name")
 
-                if TYPE_CHECKING:
-                    assert isinstance(move_input, str)
-                    assert isinstance(move_name, str)
+            if TYPE_CHECKING:
+                assert isinstance(key, str)
+                assert isinstance(move_name, str)
+                assert isinstance(move_input, str)
 
-                move_input = move_input.replace(";", "/")
+            move_input = move_input.replace(";", "/")
 
-                if move_name:
-                    suggestions.append(f"{move_name} ({move_input})")
-                else:
-                    suggestions.append(move_input)
+            if move_name:
+                suggestions[key] = f"{move_name} ({move_input})"
+            else:
+                suggestions[key] = move_input
 
-        return [apc.Choice(name=auto, value=auto) for auto in suggestions]
+        return [apc.Choice(name=value, value=key) for key, value in suggestions.items()]
 
     @_update_database.error
     async def _on_update_database_error(

@@ -1,2 +1,4 @@
 INSERT INTO character_aliases (alias, char_name)
-VALUES (:alias, :char);
+SELECT :alias, name
+FROM characters
+WHERE name = :char
