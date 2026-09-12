@@ -80,9 +80,11 @@ def input_parser(string: str) -> str:
     # Leo Whitefang requires this special exception
     if result == "[s/h] h/s":
         result = "[S]H;[H]S"
-    elif (match := re.search(r"(\w(?:\/\w)+)", result)) is not None:
+    elif (match := re.search(r"([A-Za-z](?:\/[A-Za-z])+)", result)) is not None:
         pattern = match.group(1)
         replacements = pattern.split("/")
         result = ";".join([result.replace(pattern, r) for r in replacements])
+    else:
+        result = ";".join([sub.strip() for sub in result.split("/")])
 
     return result

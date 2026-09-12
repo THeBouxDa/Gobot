@@ -178,7 +178,7 @@ async def launch(db: ConnectionManager, *, scrape: bool) -> None:
         await fetch_all_and_store()
 
     task = asyncio.create_task(build_characters())
-    await db.clear_tables()
+    await db.drop_tables()
     await db.create_tables()
 
     characters = await task
