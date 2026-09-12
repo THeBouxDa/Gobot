@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 RPS_OPTIONS = Literal["Rock", "Paper", "Scissors"]
-EN_BOOL = Literal["No", "Yes"]
+# EN_BOOL = Literal["No", "Yes"]
 
 
 class MiscCog(Cog):
@@ -26,13 +26,13 @@ class MiscCog(Cog):
     @apc.command(name="coinflip", description="Flips a coin")
     @apc.describe(invisible="Makes the command invisible to everyone else")
     async def _coin_flip(
-        self, interaction: Interaction, invisible: EN_BOOL = "No"
+        self, interaction: Interaction, invisible: bool = False
     ) -> None:
         is_heads: bool = choice((True, False))
         reply: str = "heads" if is_heads else "tails"
         reply = f"You got {reply}!"
         flag = invisible == "Yes"
-        await interaction.response.send_message(reply, ephemeral=flag)
+        await interaction.response.send_message(reply, ephemeral=invisible)
 
     @apc.command(
         name="rps", description="Play Rock Paper Scissors against another member"

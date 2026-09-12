@@ -73,7 +73,7 @@ class DustloopCog(Cog):
     ) -> None:
         """Searches for move in database and sends an embed."""
 
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=invisible)
 
         query = get_query("dustloop.select_move")
         if TYPE_CHECKING:
