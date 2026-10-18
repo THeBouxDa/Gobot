@@ -1,2 +1,2 @@
-INSERT INTO moves (section, category, name, input, startup, active, recovery, damage, guard, invuln, images, hitboxes, onBlock, onHit, char_name)
-VALUES (:section, :category, :name, :input, :startup, :active, :recovery, :damage, :guard, :invuln, :images, :hitboxes, :onBlock, :onHit, :char_name);
+INSERT INTO moves (section, category, name, input, startup, active, recovery, damage, guard, invuln, images, hitboxes, onBlock, onHit, char_name, level)
+VALUES (:section, :category, :name, :input, :startup, :active, :recovery, :damage, :guard, :invuln, :images, :hitboxes, :onBlock, :onHit, :char_name, :level);

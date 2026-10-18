@@ -84,7 +84,6 @@ def select_moves(file: str, char_name: str) -> list[Move]:  # noqa: C901
     data: dict[str, str] = {}
     for line in raw:
         # ignore moves in ignored section
-
         match = re.search(section_pattern, line)
         if match is not None:
             section = match.group(1)

@@ -31,7 +31,6 @@ class MiscCog(Cog):
         is_heads: bool = choice((True, False))
         reply: str = "heads" if is_heads else "tails"
         reply = f"You got {reply}!"
-        flag = invisible == "Yes"
         await interaction.response.send_message(reply, ephemeral=invisible)
 
     @apc.command(
@@ -77,6 +76,8 @@ class MiscCog(Cog):
         await interaction.response.send_message(embed=embed, view=rps_view)
 
     @apc.command(name="cookie", description="Gives a random cookie")
+    @apc.allowed_installs(guilds=True, users=True)
+    @apc.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def _cookie(self, interaction: Interaction) -> None:
         chosen_cookie = choice(commands_config["cookies"])
         await interaction.response.send_message(chosen_cookie)

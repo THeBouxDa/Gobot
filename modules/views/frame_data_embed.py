@@ -1,4 +1,5 @@
 import random
+import re
 
 from discord import Colour
 from discord.embeds import Embed
@@ -8,6 +9,17 @@ from modules.utils.logging_utils import get_logger
 from modules.utils.parsing_utils import sanitize
 
 logger = get_logger(__name__)
+
+# TODO: Deal with the roadblock? there's just inconsistent data in the raws...
+# def process_total(startup: str, active: str, recovery: str) -> str:
+#     if "total" in (tmp := recovery.lower()):
+#         return tmp.replace("total", "").strip()
+
+#     startup = 0 if startup == "--" else int(startup)
+#     active = 0 if active == "--" else int(active)
+#     recovery = 0 if recovery == "--" else int(recovery)
+
+#     return startup + active + recovery
 
 
 def frame_data_builder(data: dict[str, str]) -> list[Embed]:
@@ -33,6 +45,7 @@ def frame_data_builder(data: dict[str, str]) -> list[Embed]:
     guard = data["guard"].replace("\n", " ")
     on_block = data["onBlock"].replace("\n", " ")
     on_hit = data["onHit"].replace("\n", " ")
+    attack_level = data["level"].replace("\n", " ")
 
     image_url = image_url.strip()
     if image_url == "":
@@ -59,17 +72,21 @@ def frame_data_builder(data: dict[str, str]) -> list[Embed]:
     main_embed.add_field(name="Recovery", value=recovery, inline=True)
 
     damage_field: str = "Damage" if damage else ""
-    invuln_field: str = "Invuln" if damage else ""
+    invuln_field: str = "Invuln" if invuln else ""
 
-    main_embed.add_field(name=damage_field, value=damage, inline=True)
     main_embed.add_field(name="", value="", inline=True)
+    main_embed.add_field(name=damage_field, value=damage, inline=True)
     main_embed.add_field(name=invuln_field, value=invuln, inline=True)
 
     guard_field = f"Guard: {guard}"
     on_block_field = f"On Block: {on_block}"
     on_hit_field = f"On Hit: {on_hit}"
+    attack_level_field = f"level: {attack_level}"
 
-    main_embed.set_footer(text=f"{guard_field}  |  {on_block_field}  |  {on_hit_field}")
+    footer_fields = (guard_field, on_block_field, on_hit_field, attack_level_field)
+    footer = "  |  ".join(footer_fields)
+
+    main_embed.set_footer(text=footer)
 
     result = [main_embed]
     extra = [Embed(url=title_url).set_image(url=url) for url in image_urls[1:4]]

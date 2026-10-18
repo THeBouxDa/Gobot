@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS moves (
     hitboxes TEXT,
     onBlock TEXT,
     onHit TEXT,
+    level TEXT,
     char_name TEXT NOT NULL COLLATE NOCASE,
     UNIQUE(char_name, input) ON CONFLICT IGNORE,
     FOREIGN KEY (char_name) REFERENCES characters (name)

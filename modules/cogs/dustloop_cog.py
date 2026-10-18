@@ -70,6 +70,7 @@ class DustloopCog(Cog):
         character: str,
         move: str,
         invisible: bool = False,
+        keep: bool = False,
     ) -> None:
         """Searches for move in database and sends an embed."""
 
@@ -88,8 +89,12 @@ class DustloopCog(Cog):
             await interaction.followup.send("Move not found...", ephemeral=True)
         else:
             await interaction.followup.send(
-                embeds=frame_data_builder(move_data._asdict()), ephemeral=invisible
+                embeds=frame_data_builder(move_data._asdict()),
             )
+
+        if not keep:
+            message = await interaction.original_response()
+            await message.delete(delay=5 * 60)
 
     @apc.command(
         name="character_alias",

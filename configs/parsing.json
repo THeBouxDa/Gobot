@@ -28,6 +28,7 @@
         "images",
         "hitboxes",
         "onBlock",
-        "onHit"
+        "onHit",
+        "level"
     ]
 }
