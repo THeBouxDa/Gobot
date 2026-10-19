@@ -20,6 +20,10 @@ from modules.views.frame_data_embed import frame_data_builder
 if TYPE_CHECKING:
     from modules.bot import BussyBot
 
+DELETE_AFTER_MINUTES: float = 10.0
+SECONDS_IN_A_MINUTE: int = 60
+DELETE_TIMER: float = DELETE_AFTER_MINUTES * SECONDS_IN_A_MINUTE
+
 logger = get_logger(__name__)
 
 
@@ -88,13 +92,13 @@ class DustloopCog(Cog):
         if move_data is None:
             await interaction.followup.send("Move not found...", ephemeral=True)
         else:
-            await interaction.followup.send(
+            message = await interaction.followup.send(
                 embeds=frame_data_builder(move_data._asdict()),
+                wait=True,
             )
 
-        if not keep:
-            message = await interaction.original_response()
-            await message.delete(delay=5 * 60)
+            if not keep:
+                await message.delete(delay=DELETE_TIMER)
 
     @apc.command(
         name="character_alias",
