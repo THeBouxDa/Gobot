@@ -81,7 +81,7 @@ def frame_data_builder(data: dict[str, str]) -> list[Embed]:
     guard_field = f"Guard: {guard}"
     on_block_field = f"On Block: {on_block}"
     on_hit_field = f"On Hit: {on_hit}"
-    attack_level_field = f"level: {attack_level}"
+    attack_level_field = f"Level: {attack_level}"
 
     footer_fields = (guard_field, on_block_field, on_hit_field, attack_level_field)
     footer = "  |  ".join(footer_fields)
